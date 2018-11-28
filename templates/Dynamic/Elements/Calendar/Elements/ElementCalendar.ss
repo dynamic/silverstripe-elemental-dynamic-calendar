@@ -2,24 +2,30 @@
 <% if $Content %><div class="element__content">$Content</div><% end_if %>
 
 <% if $Events %>
+    <div class="row">
     <% loop $Events %>
-        <li>
-            <h4>
-                <a href="$Link">
+        <div class="col-md-4">
+            <h3>
+                <a href="$Link" title="Go to the $Title.XML page">
                     <% if $MenuTitle %>
                         $MenuTitle
                     <% else %>
                         $Title
                     <% end_if %>
                 </a>
-            </h4>
-            <h5>$StartDate</h5>
-            <% if $Abstract || $Content %><p class="hidden-sm hidden-xs"><% end_if %>
-            <% if $Abstract %>$Abstract<% else_if $Content %>$Content.Summary<% end_if %>
-            <% if $Abstract || $Content %></p><% end_if %>
-            <a class="readMoreLink" href="$Link" title="Read more about &quot;{$Title}&quot;">Read more about&quot;{$Title}&quot;...</a>
-        </li>
+            </h3>
+            <% if $StartDate %><h4>$StartDate.Format("MMMM d,  Y")</h4><% end_if %>
+
+            <% if $Abstract %>
+                <p class="hidden-sm hidden-xs">$Abstract</p>
+            <% else_if $Abstract %>
+                <p class="hidden-sm hidden-xs">$Content.FirstParagraph</p>
+            <% end_if %>
+
+            <a href="$Link" title="Go to the $Title.XML page">Learn More</a>
+        </div>
     <% end_loop %>
-    <p><a href="$Calendar.Link" class="btn btn-primary" title="Go to the $Title page">View all events</a></p>
+    </div>
+    <p><a href="$Calendar.Link" class="btn btn-primary" title="View all events">View all events</a></p>
 <% end_if %>
 
