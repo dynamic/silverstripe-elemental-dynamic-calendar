@@ -3,7 +3,7 @@
 ## Requirements
 
 * SilverStripe ^4.0
-* SilverStripe Elemental ^2.0
+* SilverStripe Elemental ^2.0 || ^3.0
 * Dynamic Calendar dev-master
 
 ## Installation
