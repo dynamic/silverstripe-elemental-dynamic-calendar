@@ -2,9 +2,8 @@
 
 ## Requirements
 
-* SilverStripe ^4.0
-* SilverStripe Elemental ^2.0
-* Dynamic Calendar dev-master
+* dynamic/dynamic-calendar: ^3@dev
+* dnadesign/silverstripe-elemental: ^4@dev
 
 ## Installation
 

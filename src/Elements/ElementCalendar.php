@@ -4,6 +4,7 @@ namespace Dynamic\Elements\Calendar\Elements;
 
 use DNADesign\Elemental\Models\BaseElement;
 use Dynamic\Calendar\Page\Calendar;
+use SilverStripe\ORM\FieldType\DBField;
 
 /**
  * Class ElementCalendar
@@ -50,22 +51,6 @@ class ElementCalendar extends BaseElement
     );
 
     /**
-     * @return DBHTMLText
-     */
-    public function ElementSummary()
-    {
-        return DBField::create_field('HTMLText', $this->Content)->Summary(20);
-    }
-
-    /**
-     * @return string
-     */
-    public function getType()
-    {
-        return _t(__CLASS__ . '.BlockType', 'Calendar');
-    }
-
-    /**
      * @return Calendar
      */
     public function getCalendar()
@@ -79,5 +64,42 @@ class ElementCalendar extends BaseElement
     public function getEvents()
     {
         return Calendar::upcoming_events()->limit($this->Limit);
+    }
+
+    /**
+     * @return DBHTMLText
+     */
+    public function getSummary()
+    {
+        if ($this->getEvents()->count() > 0) {
+            $ct = $this->getEvents()->count();
+            if ($ct == 1) {
+                $label = ' event';
+            } else {
+                $label = ' events';
+            }
+            return DBField::create_field(
+                'HTMLText',
+                $ct . $label
+            )->Summary(20);
+        }
+    }
+
+    /**
+     * @return array
+     */
+    protected function provideBlockSchema()
+    {
+        $blockSchema = parent::provideBlockSchema();
+        $blockSchema['content'] = $this->getSummary();
+        return $blockSchema;
+    }
+
+    /**
+     * @return string
+     */
+    public function getType()
+    {
+        return _t(__CLASS__ . '.BlockType', 'Calendar');
     }
 }
