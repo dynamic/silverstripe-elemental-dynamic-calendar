@@ -10,15 +10,15 @@
     ],
     "keywords": [
         "silverstripe",
-        "caledar",
+        "calendar",
         "element",
         "block"
     ],
     "type": "silverstripe-vendormodule",
     "license": "BSD-3-Clause",
     "require": {
-        "dynamic/dynamic-calendar": "^3@dev",
-        "dnadesign/silverstripe-elemental": "^4@dev"
+        "dynamic/silverstripe-calendar": "^1.0",
+        "dnadesign/silverstripe-elemental": "^4.0"
     },
     "require-dev": {
         "phpunit/PHPUnit": "^5.7",
@@ -37,7 +37,7 @@
     "prefer-stable": true,
     "extra": {
         "branch-alias": {
-            "dev-master": "2.0.x-dev"
+            "dev-master": "3.0.x-dev"
         }
     },
     "scripts": {
