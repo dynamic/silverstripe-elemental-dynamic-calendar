@@ -3,6 +3,7 @@
 namespace Dynamic\Elements\Calendar\Elements;
 
 use DNADesign\Elemental\Models\BaseElement;
+use Dynamic\Calendar\Controller\CalendarController;
 use Dynamic\Calendar\Page\Calendar;
 use SilverStripe\ORM\FieldType\DBField;
 
@@ -15,6 +16,11 @@ use SilverStripe\ORM\FieldType\DBField;
  */
 class ElementCalendar extends BaseElement
 {
+    /**
+     * @var
+     */
+    private $events;
+
     /**
      * @var string
      */
@@ -38,24 +44,35 @@ class ElementCalendar extends BaseElement
     /**
      * @var array
      */
-    private static $db = array(
+    private static $db = [
         'Limit' => 'Int',
         'Content' => 'HTMLText',
-    );
+    ];
 
     /**
      * @var array
      */
-    private static $defaults = array(
-        'Limit' => 3,
-    );
+    private static $has_one = [
+        'Calendar' => Calendar::class,
+    ];
 
     /**
-     * @return Calendar
+     * @var array
      */
-    public function getCalendar()
+    private static $defaults = [
+        'Limit' => 3,
+    ];
+
+    /**
+     * @return $this
+     */
+    protected function setEvents()
     {
-        return Calendar::get()->first();
+        $this->events = $this->CalendarID
+            ? CalendarController::create($this->Calendar())->getEvents()
+            : CalendarController::create($this->Calendar())->setDefaultFilter(true)->getEvents();
+
+        return $this;
     }
 
     /**
@@ -63,7 +80,11 @@ class ElementCalendar extends BaseElement
      */
     public function getEvents()
     {
-        return Calendar::upcoming_events()->limit($this->Limit);
+        if (!$this->events) {
+            $this->setEvents();
+        }
+
+        return $this->events;
     }
 
     /**
@@ -78,6 +99,7 @@ class ElementCalendar extends BaseElement
             } else {
                 $label = ' events';
             }
+
             return DBField::create_field(
                 'HTMLText',
                 $ct . $label
@@ -92,6 +114,7 @@ class ElementCalendar extends BaseElement
     {
         $blockSchema = parent::provideBlockSchema();
         $blockSchema['content'] = $this->getSummary();
+
         return $blockSchema;
     }
 
