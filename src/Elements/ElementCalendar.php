@@ -68,9 +68,15 @@ class ElementCalendar extends BaseElement
      */
     protected function setEvents()
     {
-        $this->events = $this->CalendarID
+        $events = $this->CalendarID
             ? CalendarController::create($this->Calendar())->getEvents()
             : CalendarController::create($this->Calendar())->setDefaultFilter(true)->getEvents();
+
+        if ($this->Limit > 0) {
+            $events = $events->limit($this->Limit);
+        }
+
+        $this->events = $events;
 
         return $this;
     }
