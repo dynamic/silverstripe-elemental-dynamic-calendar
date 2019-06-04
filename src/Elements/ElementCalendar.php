@@ -24,7 +24,7 @@ class ElementCalendar extends BaseElement
     /**
      * @var string
      */
-    private static $icon = 'vendor/dnadesign/silverstripe-elemental/images/base.svg';
+    private static $icon = 'font-icon-p-event-alt';
 
     /**
      * @var string
