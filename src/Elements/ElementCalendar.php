@@ -72,6 +72,8 @@ class ElementCalendar extends BaseElement
             ? CalendarController::create($this->Calendar())->getEvents()
             : CalendarController::create($this->Calendar())->setDefaultFilter(true)->getEvents();
 
+        $this->extend('updateSetEvents', $events);
+
         if ($this->Limit > 0) {
             $events = $events->limit($this->Limit);
         }
