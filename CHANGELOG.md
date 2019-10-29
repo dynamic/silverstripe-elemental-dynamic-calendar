@@ -1,5 +1,16 @@
 # Change Log
 
+## [3.1.0](https://github.com/dynamic/silverstripe-elemental-dynamic-calendar/tree/3.1.0) (2019-10-28)
+[Full Changelog](https://github.com/dynamic/silverstripe-elemental-dynamic-calendar/compare/3.0.0...3.1.0)
+
+**Implemented enhancements:**
+
+- ENHANCEMENT extension point for altering event list [\#7](https://github.com/dynamic/silverstripe-elemental-dynamic-calendar/issues/7)
+
+**Merged pull requests:**
+
+- ENHANCEMENT updateSetEvents extension point [\#8](https://github.com/dynamic/silverstripe-elemental-dynamic-calendar/pull/8) ([muskie9](https://github.com/muskie9))
+
 ## [3.0.0](https://github.com/dynamic/silverstripe-elemental-dynamic-calendar/tree/3.0.0) (2019-08-15)
 [Full Changelog](https://github.com/dynamic/silverstripe-elemental-dynamic-calendar/compare/1.0.0...3.0.0)
 
