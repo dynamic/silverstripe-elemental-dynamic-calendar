@@ -5,6 +5,7 @@ namespace Dynamic\Elements\Calendar\Elements;
 use DNADesign\Elemental\Models\BaseElement;
 use Dynamic\Calendar\Controller\CalendarController;
 use Dynamic\Calendar\Page\Calendar;
+use SilverStripe\Forms\FieldList;
 use SilverStripe\ORM\FieldType\DBField;
 
 /**
@@ -62,6 +63,25 @@ class ElementCalendar extends BaseElement
     private static $defaults = [
         'Limit' => 3,
     ];
+
+    /**
+     * @return FieldList
+     */
+    public function getCMSFields()
+    {
+        $this->beforeUpdateCMSFields(function (FieldList $fields) {
+            $fields->addFieldsToTab(
+                'Root.Main',
+                [
+                    $fields->dataFieldByName('CalendarID'),
+                    $fields->dataFieldByName('Limit'),
+                ],
+                'Content'
+            );
+        });
+
+        return parent::getCMSFields();
+    }
 
     /**
      * @return $this
