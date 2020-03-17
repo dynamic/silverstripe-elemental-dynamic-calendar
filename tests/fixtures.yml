@@ -1,3 +1,34 @@
+Dynamic\Calendar\Model\Category:
+  one:
+    Title: "Category One"
+  two:
+    Title: "Category Two"
+  three:
+    Title: "Category Three"
+  four:
+    Title: "Category Four"
+    ParentID: =>Dynamic\Calendar\Model\Category.two
+
+Dynamic\Calendar\Page\Calendar:
+  one:
+    Title: "My Awesome Calendar"
+  two:
+    Title: "My Other Awesome Calendar"
+  three:
+    Title: "My Awesome Calendar"
+  four:
+    Title: "My Awesome Calendar"
+
 Dynamic\Elements\Calendar\Elements\ElementCalendar:
   one:
     Title: "Calendar"
+  two:
+    Title: "Unlimited"
+    Limit: 0
+  three:
+    Title: "Calendar Three"
+    Calendar: =>Dynamic\Calendar\Page\Calendar.three
+  four:
+    Title: "Calendar four"
+    Calendar: =>Dynamic\Calendar\Page\Calendar.three
+    Categories: =>Dynamic\Calendar\Model\Category.one

@@ -4,9 +4,17 @@ namespace Dynamic\Elements\Calendar\Elements;
 
 use DNADesign\Elemental\Models\BaseElement;
 use Dynamic\Calendar\Controller\CalendarController;
+use Dynamic\Calendar\Model\Category;
 use Dynamic\Calendar\Page\Calendar;
 use SilverStripe\Forms\FieldList;
+use SilverStripe\Forms\GridField\GridField;
+use SilverStripe\Forms\GridField\GridFieldAddExistingAutocompleter;
+use SilverStripe\Forms\GridField\GridFieldAddNewButton;
+use SilverStripe\ORM\DataList;
 use SilverStripe\ORM\FieldType\DBField;
+use SilverStripe\ORM\FieldType\DBHTMLText;
+use SilverStripe\ORM\ManyManyList;
+use Symbiote\GridFieldExtensions\GridFieldAddExistingSearchButton;
 
 /**
  * Class ElementCalendar
@@ -14,6 +22,10 @@ use SilverStripe\ORM\FieldType\DBField;
  *
  * @property int $Limit
  * @property string $Content
+ * @property int $CalendarID
+ *
+ * @method Calendar Calendar()
+ * @method ManyManyList Categories()
  */
 class ElementCalendar extends BaseElement
 {
@@ -60,6 +72,13 @@ class ElementCalendar extends BaseElement
     /**
      * @var array
      */
+    private static $many_many = [
+        'Categories' => Category::class,
+    ];
+
+    /**
+     * @var array
+     */
     private static $defaults = [
         'Limit' => 3,
     ];
@@ -78,6 +97,18 @@ class ElementCalendar extends BaseElement
                 ],
                 'Content'
             );
+
+            /** @var GridField $categories */
+            if ($categories = $fields->dataFieldByName('Categories')) {
+                $config = $categories->getConfig();
+
+                $config->removeComponentsByType([
+                    GridFieldAddNewButton::class,
+                    GridFieldAddExistingAutocompleter::class,
+                ])->addComponents([
+                    new GridFieldAddExistingSearchButton(),
+                ]);
+            }
         });
 
         return parent::getCMSFields();
@@ -88,9 +119,14 @@ class ElementCalendar extends BaseElement
      */
     protected function setEvents()
     {
+        /** @var DataList $events */
         $events = $this->CalendarID
             ? CalendarController::create($this->Calendar())->getEvents()
             : CalendarController::create($this->Calendar())->setDefaultFilter(true)->getEvents();
+
+        if ($this->Categories()->exists()) {
+            $events = $events->filter('Categories.ID', $this->Categories()->column());
+        }
 
         $this->extend('updateSetEvents', $events);
 
