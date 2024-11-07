@@ -18,7 +18,7 @@
     ],
     "require": {
         "dnadesign/silverstripe-elemental": "^5.0",
-        "dynamic/silverstripe-calendar": "^2.0"
+        "dynamic/silverstripe-calendar": "dev-cms5"
     },
     "require-dev": {
         "silverstripe/recipe-testing": "^3"
