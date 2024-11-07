@@ -21,8 +21,7 @@
         "dnadesign/silverstripe-elemental": "^4.0"
     },
     "require-dev": {
-        "phpunit/PHPUnit": "^5.7",
-        "squizlabs/php_codesniffer": "*"
+        "silverstripe/recipe-testing": "^2"
     },
     "autoload": {
         "psr-4": {
