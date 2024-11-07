@@ -1,29 +1,30 @@
 {
     "name": "dynamic/silverstripe-elemental-dynamic-calendar",
     "description": "A calendar element for the SilverStripe Elemental module",
-    "authors": [
-        {
-            "name": "Dynamic",
-            "email": "dev@dynamicagency.com",
-            "homepage": "http://www.dynamicagency.com"
-        }
-    ],
+    "license": "BSD-3-Clause",
+    "type": "silverstripe-vendormodule",
     "keywords": [
         "silverstripe",
         "calendar",
         "element",
         "block"
     ],
-    "type": "silverstripe-vendormodule",
-    "license": "BSD-3-Clause",
+    "authors": [
+        {
+            "name": "Dynamic",
+            "email": "dev@dynamicagency.com",
+            "homepage": "https://www.dynamicagency.com"
+        }
+    ],
     "require": {
-        "dynamic/silverstripe-calendar": "^1.0",
-        "dnadesign/silverstripe-elemental": "^4.0"
+        "dnadesign/silverstripe-elemental": "^5.0",
+        "dynamic/silverstripe-calendar": "^2.0"
     },
     "require-dev": {
-        "phpunit/PHPUnit": "^5.7",
-        "squizlabs/php_codesniffer": "*"
+        "silverstripe/recipe-testing": "^3"
     },
+    "minimum-stability": "dev",
+    "prefer-stable": true,
     "autoload": {
         "psr-4": {
             "Dynamic\\Elements\\Calendar\\": "src/",
@@ -33,8 +34,6 @@
     "config": {
         "process-timeout": 600
     },
-    "minimum-stability": "dev",
-    "prefer-stable": true,
     "extra": {
         "branch-alias": {
             "dev-master": "3.x-dev"
