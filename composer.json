@@ -23,7 +23,7 @@
         "dnadesign/silverstripe-elemental": "^2@dev || ^3@dev"
     },
     "require-dev": {
-        "phpunit/PHPUnit": "^5.7",
+        "phpunit/phpunit": "^5.7",
         "squizlabs/php_codesniffer": "*"
     },
     "autoload": {
