@@ -2,30 +2,23 @@
 <% if $Content %><div class="element__content">$Content</div><% end_if %>
 
 <% if $Events %>
-    <div class="row">
+    <div class="events-list">
     <% loop $Events %>
-        <div class="col-md-4">
-            <h3>
-                <a href="$Link" title="Go to the $Title.XML page">
-                    <% if $MenuTitle %>
-                        $MenuTitle
-                    <% else %>
-                        $Title
-                    <% end_if %>
-                </a>
-            </h3>
-            <% if $StartDate %><h4>$StartDate.Format("MMMM d,  Y")</h4><% end_if %>
-
-            <% if $Abstract %>
-                <p class="hidden-sm hidden-xs">$Abstract</p>
-            <% else_if $Abstract %>
-                <p class="hidden-sm hidden-xs">$Content.FirstParagraph</p>
-            <% end_if %>
-
-            <a href="$Link" title="Go to the $Title.XML page">Learn More</a>
-        </div>
+        <% include Dynamic/Calendar/Includes/EventCompact %>
     <% end_loop %>
     </div>
-    <p><a href="$Calendar.Link" class="btn btn-primary" title="View all events">View all events</a></p>
+
+    <% if $Calendar %>
+        <div class="mt-3">
+            <a href="$Calendar.Link" class="btn btn-primary" title="View all events">
+                <i class="bi bi-calendar3"></i> View all events
+            </a>
+        </div>
+    <% end_if %>
+<% else %>
+    <div class="alert alert-info">
+        <i class="bi bi-calendar-x"></i>
+        <strong>No upcoming events</strong> - Check back soon for new events!
+    </div>
 <% end_if %>
 

@@ -3,13 +3,13 @@
 namespace Dynamic\Elements\Calendar\Elements;
 
 use DNADesign\Elemental\Models\BaseElement;
-use Dynamic\Calendar\Controller\CalendarController;
 use Dynamic\Calendar\Model\Category;
 use Dynamic\Calendar\Page\Calendar;
 use SilverStripe\Forms\FieldList;
 use SilverStripe\Forms\GridField\GridField;
 use SilverStripe\Forms\GridField\GridFieldAddExistingAutocompleter;
 use SilverStripe\Forms\GridField\GridFieldAddNewButton;
+use SilverStripe\ORM\ArrayList;
 use SilverStripe\ORM\DataList;
 use SilverStripe\ORM\FieldType\DBField;
 use SilverStripe\ORM\FieldType\DBHTMLText;
@@ -115,24 +115,31 @@ class ElementCalendar extends BaseElement
     }
 
     /**
+     * Set events using the Calendar's feed method
+     *
      * @return $this
      */
     protected function setEvents()
     {
-        /** @var DataList $events */
-        $events = $this->CalendarID
-            ? CalendarController::create($this->Calendar())->getEvents()
-            : CalendarController::create($this->Calendar())->setDefaultFilter(true)->getEvents();
+        $calendar = $this->Calendar();
 
-        if ($this->Categories()->exists()) {
-            $events = $events->filter('Categories.ID', $this->Categories()->column());
+        // If no calendar is set, try to use the current page if it's a Calendar
+        if (!$calendar || !$calendar->exists()) {
+            $currentPage = $this->getPage();
+            if ($currentPage instanceof Calendar) {
+                $calendar = $currentPage;
+            }
         }
+
+        if (!$calendar || !$calendar->exists()) {
+            $this->events = ArrayList::create();
+            return $this;
+        }
+
+        // Get events feed from the Calendar page with limit and category filtering
+        $events = $calendar->getEventsFeed($this->Limit, $this->Categories());
 
         $this->extend('updateSetEvents', $events);
-
-        if ($this->Limit > 0) {
-            $events = $events->limit($this->Limit);
-        }
 
         $this->events = $events;
 
