@@ -106,7 +106,7 @@ class ElementCalendar extends BaseElement
                     GridFieldAddNewButton::class,
                     GridFieldAddExistingAutocompleter::class,
                 ])->addComponents([
-                    new GridFieldAddExistingSearchButton(),
+                    GridFieldAddExistingSearchButton::create(),
                 ]);
             }
         });
@@ -176,6 +176,8 @@ class ElementCalendar extends BaseElement
                 $ct . $label
             )->Summary(20);
         }
+
+        return DBField::create_field('HTMLText', 'No events');
     }
 
     /**
