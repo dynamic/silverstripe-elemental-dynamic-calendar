@@ -18,10 +18,13 @@
     ],
     "require": {
         "dnadesign/silverstripe-elemental": "^5.0",
-        "dynamic/silverstripe-calendar": "dev-cms5"
+        "dynamic/silverstripe-calendar": "^2.0"
     },
     "require-dev": {
-        "silverstripe/recipe-testing": "^3"
+        "cambis/silverstan": "^2.1",
+        "phpstan/extension-installer": "^1.4",
+        "silverstripe/recipe-testing": "^3",
+        "squizlabs/php_codesniffer": "^3.7"
     },
     "minimum-stability": "dev",
     "prefer-stable": true,
@@ -33,11 +36,6 @@
     },
     "config": {
         "process-timeout": 600
-    },
-    "extra": {
-        "branch-alias": {
-            "dev-master": "4.x-dev"
-        }
     },
     "scripts": {
         "lint": "vendor/bin/phpcs src/ tests/",
