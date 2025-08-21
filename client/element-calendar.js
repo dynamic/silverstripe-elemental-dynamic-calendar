@@ -1,6 +1,18 @@
 // ElementCalendar.js - FullCalendar integration with all view modes
 // This extends the CalendarView from dynamic/silverstripe-calendar
 
+/**
+ * Safely parse JSON data attributes with error handling
+ */
+function safeJsonParse(jsonString, fallback = null) {
+  try {
+    return JSON.parse(jsonString);
+  } catch (e) {
+    console.warn('ElementCalendar: Invalid JSON data attribute, using fallback:', e);
+    return fallback;
+  }
+}
+
 document.addEventListener('DOMContentLoaded', function() {
   // Check if CalendarView is available from the main calendar module
   if (typeof window.CalendarView === 'undefined') {
@@ -12,7 +24,7 @@ document.addEventListener('DOMContentLoaded', function() {
   const elementCalendars = document.querySelectorAll('.element-fullcalendar');
 
   elementCalendars.forEach(element => {
-    if (element.dataset.calendarInitialized) {
+    if (element.getAttribute('data-element-calendar-initialized')) {
       return; // Already initialized
     }
 
@@ -34,11 +46,17 @@ document.addEventListener('DOMContentLoaded', function() {
     const calendarOptions = {
       initialView: element.dataset.initialView || 'dayGridMonth',
       height: parseInt(element.dataset.height) || 600,
-      headerToolbar: element.dataset.headerToolbar ? JSON.parse(element.dataset.headerToolbar) : {
-        left: 'prev,next today',
-        center: 'title',
-        right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
-      },
+      headerToolbar: (() => {
+        if (element.dataset.headerToolbar) {
+          const parsed = safeJsonParse(element.dataset.headerToolbar, null);
+          if (parsed) return parsed;
+        }
+        return {
+          left: 'prev,next today',
+          center: 'title',
+          right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
+        };
+      })(),
       // Enable all the FullCalendar views
       views: {
         dayGridMonth: { buttonText: 'Month' },
@@ -73,7 +91,7 @@ document.addEventListener('DOMContentLoaded', function() {
       });
 
       // Mark as initialized
-      element.dataset.calendarInitialized = 'true';
+      element.setAttribute('data-element-calendar-initialized', 'true');
 
       console.log(`ElementCalendar initialized with FullCalendar views`);
 

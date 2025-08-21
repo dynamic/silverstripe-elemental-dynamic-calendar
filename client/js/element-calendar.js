@@ -7,6 +7,18 @@
  * duplicating the complex bundling.
  */
 
+/**
+ * Safely parse JSON data attributes with error handling
+ */
+function safeJsonParse(jsonString, fallback = null) {
+  try {
+    return JSON.parse(jsonString);
+  } catch (e) {
+    console.warn('ElementCalendar: Invalid JSON data attribute, using fallback:', e);
+    return fallback;
+  }
+}
+
 // ElementCalendar class that handles individual calendar instances
 class ElementCalendar {
   constructor(element, options = {}) {
@@ -56,11 +68,11 @@ class ElementCalendar {
       categories: container.dataset.categories ? container.dataset.categories.split(',').filter(cat => cat.trim()) : [],
       initialView: element.dataset.initialView || 'listWeek',
       height: parseInt(element.dataset.height) || 300,
-      headerToolbar: element.dataset.headerToolbar ? JSON.parse(element.dataset.headerToolbar) : {},
-      footerToolbar: element.dataset.footerToolbar ? JSON.parse(element.dataset.footerToolbar) : null,
-      dayMaxEvents: parseInt(element.dataset.dayMaxEvents) || false,
+      headerToolbar: element.dataset.headerToolbar ? safeJsonParse(element.dataset.headerToolbar, {}) : {},
+      footerToolbar: element.dataset.footerToolbar ? safeJsonParse(element.dataset.footerToolbar, null) : null,
+      dayMaxEvents: element.dataset.dayMaxEvents ? parseInt(element.dataset.dayMaxEvents) : false,
       moreLinkClick: element.dataset.moreLinkClick || 'popover',
-      listDayFormat: element.dataset.listDayFormat ? JSON.parse(element.dataset.listDayFormat) : undefined,
+      listDayFormat: element.dataset.listDayFormat ? safeJsonParse(element.dataset.listDayFormat, undefined) : undefined,
       noEventsText: element.dataset.noEventsText || 'No events to display'
     };
   }
@@ -190,7 +202,7 @@ function initializeElementCalendars() {
   console.log('Scanning for ElementCalendar instances...');
 
   // Find all calendar elements that haven't been initialized yet
-  const calendarElements = document.querySelectorAll('.element-fullcalendar:not([data-calendar-initialized])');
+  const calendarElements = document.querySelectorAll('.element-fullcalendar:not([data-element-calendar-initialized])');
 
   if (calendarElements.length === 0) {
     console.log('No ElementCalendar instances found to initialize');
@@ -202,7 +214,7 @@ function initializeElementCalendars() {
   calendarElements.forEach(element => {
     try {
       new ElementCalendar(element);
-      element.setAttribute('data-calendar-initialized', 'true');
+      element.setAttribute('data-element-calendar-initialized', 'true');
     } catch (error) {
       console.error('Failed to initialize ElementCalendar:', error, element);
     }
