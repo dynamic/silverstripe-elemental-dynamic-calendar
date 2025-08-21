@@ -5,6 +5,7 @@ namespace Dynamic\Elements\Calendar\Elements;
 use DNADesign\Elemental\Models\BaseElement;
 use Dynamic\Calendar\Model\Category;
 use Dynamic\Calendar\Page\Calendar;
+use SilverStripe\Forms\DropdownField;
 use SilverStripe\Forms\FieldList;
 use SilverStripe\Forms\GridField\GridField;
 use SilverStripe\Forms\GridField\GridFieldAddExistingAutocompleter;
