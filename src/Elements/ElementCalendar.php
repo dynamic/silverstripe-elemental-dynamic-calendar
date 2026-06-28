@@ -10,7 +10,7 @@ use SilverStripe\Forms\FieldList;
 use SilverStripe\Forms\GridField\GridField;
 use SilverStripe\Forms\GridField\GridFieldAddExistingAutocompleter;
 use SilverStripe\Forms\GridField\GridFieldAddNewButton;
-use SilverStripe\ORM\ArrayList;
+use SilverStripe\Model\List\ArrayList;
 use SilverStripe\ORM\DataList;
 use SilverStripe\ORM\FieldType\DBField;
 use SilverStripe\ORM\FieldType\DBHTMLText;
@@ -148,7 +148,7 @@ class ElementCalendar extends BaseElement
     }
 
     /**
-     * @return \SilverStripe\ORM\ArrayList|\SilverStripe\ORM\DataList
+     * @return \SilverStripe\Model\List\ArrayList|\SilverStripe\ORM\DataList
      */
     public function getEvents()
     {
@@ -192,11 +192,6 @@ class ElementCalendar extends BaseElement
         return $blockSchema;
     }
 
-    /**
-     * @return string
-     */
-    public function getType()
-    {
-        return _t(__CLASS__ . '.BlockType', 'Calendar');
-    }
+    private static string $class_description = 'Calendar';
 }
+
