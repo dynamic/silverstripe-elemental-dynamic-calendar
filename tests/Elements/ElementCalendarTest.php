@@ -8,6 +8,7 @@ use Dynamic\Calendar\Page\Calendar;
 use Dynamic\Calendar\Page\EventPage;
 use Dynamic\Elements\Calendar\Elements\ElementCalendar;
 use SilverStripe\Dev\SapphireTest;
+use SilverStripe\Forms\DropdownField;
 use SilverStripe\ORM\ArrayList;
 use SilverStripe\Versioned\Versioned;
 
@@ -278,6 +279,26 @@ class ElementCalendarTest extends SapphireTest
         // Should have multiple instances from the recurring event
         $this->assertGreaterThan(1, $events->count());
         $this->assertLessThanOrEqual(10, $events->count()); // Allow for more instances due to limit
+    }
+
+    /**
+     * Test that getCMSFields renders CalendarID as a plain DropdownField,
+     * not a scaffolded TreeDropdownField (SS6 has_one-to-SiteTree regression).
+     */
+    public function testGetCMSFieldsCalendarIdIsDropdownField()
+    {
+        /** @var ElementCalendar $element */
+        $element = $this->objFromFixture(ElementCalendar::class, 'one');
+
+        $fields = $element->getCMSFields();
+        $field = $fields->dataFieldByName('CalendarID');
+
+        $this->assertNotNull($field, 'CalendarID field should be present');
+        $this->assertSame(
+            DropdownField::class,
+            get_class($field),
+            'Calendar picker must be a plain DropdownField, not a tree picker or searchable subclass'
+        );
     }
 
     /**
