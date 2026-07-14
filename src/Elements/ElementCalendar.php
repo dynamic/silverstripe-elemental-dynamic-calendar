@@ -93,7 +93,11 @@ class ElementCalendar extends BaseElement
             $fields->addFieldsToTab(
                 'Root.Main',
                 [
-                    $fields->dataFieldByName('CalendarID'),
+                    DropdownField::create(
+                        'CalendarID',
+                        _t(__CLASS__ . '.CalendarLabel', 'Calendar'),
+                        Calendar::get()->map('ID', 'Title')
+                    )->setEmptyString(''),
                     $fields->dataFieldByName('Limit'),
                 ],
                 'Content'
