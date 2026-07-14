@@ -299,6 +299,18 @@ class ElementCalendarTest extends SapphireTest
             get_class($field),
             'Calendar picker must be a plain DropdownField, not a tree picker or searchable subclass'
         );
+
+        // The source must be Calendar pages only (ID => Title), not the whole site tree.
+        $source = $field->getSource();
+        $calendarOne = $this->objFromFixture(Calendar::class, 'one');
+        $calendarTwo = $this->objFromFixture(Calendar::class, 'two');
+
+        $this->assertArrayHasKey($calendarOne->ID, $source);
+        $this->assertSame('My Awesome Calendar', $source[$calendarOne->ID]);
+        $this->assertArrayHasKey($calendarTwo->ID, $source);
+        $this->assertSame('My Other Awesome Calendar', $source[$calendarTwo->ID]);
+
+        $this->assertSame('', $field->getEmptyString(), 'Field should allow an empty/no-calendar selection');
     }
 
     /**
