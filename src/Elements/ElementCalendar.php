@@ -2,6 +2,7 @@
 
 namespace Dynamic\Elements\Calendar\Elements;
 
+use Carbon\Carbon;
 use DNADesign\Elemental\Models\BaseElement;
 use Dynamic\Calendar\Model\Category;
 use Dynamic\Calendar\Page\Calendar;
@@ -116,6 +117,17 @@ class ElementCalendar extends BaseElement
     }
 
     /**
+     * How far ahead (in months) setEvents() looks when no explicit window is
+     * involved. Bounds the recurring-event expansion: with no window the feed
+     * expanded every recurring event across a multi-year default range just to
+     * render a summary. 0 disables the bound (pre-4.1 behaviour).
+     *
+     * @config
+     * @var int
+     */
+    private static int $events_window_months = 6;
+
+    /**
      * Set events using the Calendar's feed method
      *
      * @return $this
@@ -137,8 +149,15 @@ class ElementCalendar extends BaseElement
             return $this;
         }
 
-        // Get events feed from the Calendar page with limit and category filtering
-        $events = $calendar->getEventsFeed($this->Limit, $this->Categories());
+        // Bound the window so the feed only expands occurrences it can show.
+        // Previously both date arguments were omitted, so every uncached call
+        // (including provideBlockSchema() for each block in the CMS editor)
+        // materialised the calendar's entire event corpus to display a few.
+        $windowMonths = (int) $this->config()->get('events_window_months');
+        $fromDate = $windowMonths > 0 ? Carbon::today() : null;
+        $toDate = $windowMonths > 0 ? Carbon::today()->addMonths($windowMonths)->endOfMonth() : null;
+
+        $events = $calendar->getEventsFeed($this->Limit, $this->Categories(), $fromDate, $toDate);
 
         $this->extend('updateSetEvents', $events);
 
@@ -164,8 +183,9 @@ class ElementCalendar extends BaseElement
      */
     public function getSummary()
     {
-        if ($this->getEvents()->count() > 0) {
-            $ct = $this->getEvents()->count();
+        $ct = $this->getEvents()->count();
+
+        if ($ct > 0) {
             if ($ct == 1) {
                 $label = ' event';
             } else {

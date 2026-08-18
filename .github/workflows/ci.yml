@@ -12,3 +12,7 @@ jobs:
     with:
       phpcoverage: false
       js: false
+      # TEMPORARY - remove when dynamic/silverstripe-calendar 2.2.0 is tagged
+      # and this module's constraint moves to ^2.2. The test suite needs the
+      # stage-safe parent validation fix that is not in any 2.x tag yet.
+      composer_require_extra: "dynamic/silverstripe-calendar:2.x-dev as 2.99.0"
