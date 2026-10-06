@@ -198,4 +198,3 @@ class ElementCalendar extends BaseElement
 
     private static string $class_description = 'Calendar';
 }
-
