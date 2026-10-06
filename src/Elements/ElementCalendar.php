@@ -123,13 +123,27 @@ class ElementCalendar extends BaseElement
     /**
      * How far ahead (in months) setEvents() looks when fetching the feed. Bounds the
      * recurring-event expansion: with no window the feed expanded every recurring event
-     * across a multi-year default range just to render a summary. 0 disables the bound
-     * (pre-5.x behaviour: the whole event corpus materialised).
+     * across a multi-year default range, and the calendar's whole past event corpus,
+     * just to render a summary. 0 disables the bound entirely (the pre-fix behaviour,
+     * restored for sites that need it).
      *
      * @config
      * @var int
      */
     private static int $events_window_months = 6;
+
+    /**
+     * How many days before today the window reaches back. Calendar::getEventsFeed()
+     * filters on StartDate only, so a window starting exactly today also drops an event
+     * that is still running (StartDate < today <= EndDate). Reaching back a day keeps
+     * the common one-day-overnight case visible while still bounding the fetch; sites
+     * with longer running events should raise this, and 0 restores a window that starts
+     * exactly today.
+     *
+     * @config
+     * @var int
+     */
+    private static int $events_window_backfill_days = 1;
 
     /**
      * Set events using the Calendar's feed method
@@ -158,8 +172,15 @@ class ElementCalendar extends BaseElement
         // provideBlockSchema() for each block in the CMS editor) materialised the
         // calendar's entire event corpus to display a few.
         $windowMonths = (int) $this->config()->get('events_window_months');
-        $fromDate = $windowMonths > 0 ? Carbon::today() : null;
-        $toDate = $windowMonths > 0 ? Carbon::today()->addMonths($windowMonths)->endOfMonth() : null;
+        $backfillDays = max(0, (int) $this->config()->get('events_window_backfill_days'));
+
+        if ($windowMonths > 0) {
+            $fromDate = Carbon::today()->subDays($backfillDays);
+            $toDate = Carbon::today()->addMonths($windowMonths)->endOfMonth();
+        } else {
+            $fromDate = null;
+            $toDate = null;
+        }
 
         $events = $calendar->getEventsFeed($this->Limit, $this->Categories(), $fromDate, $toDate);
 

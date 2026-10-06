@@ -372,7 +372,7 @@ class ElementCalendarTest extends SapphireTest
      */
     public function testPastEventsAreExcludedFromTheWindow()
     {
-        $this->createEvent('Past event', Carbon::yesterday()->format('Y-m-d'));
+        $this->createEvent('Past event', Carbon::today()->subDays(5)->format('Y-m-d'));
         $this->createEvent('Upcoming event', Carbon::tomorrow()->format('Y-m-d'));
 
         $element = $this->createElement(5);
@@ -413,7 +413,7 @@ class ElementCalendarTest extends SapphireTest
     {
         Config::modify()->set(ElementCalendar::class, 'events_window_months', 0);
 
-        $this->createEvent('Past event', Carbon::yesterday()->format('Y-m-d'));
+        $this->createEvent('Past event', Carbon::today()->subDays(5)->format('Y-m-d'));
         $this->createEvent('Upcoming event', Carbon::tomorrow()->format('Y-m-d'));
 
         $element = $this->createElement(5);
@@ -433,7 +433,7 @@ class ElementCalendarTest extends SapphireTest
     {
         Config::modify()->set(ElementCalendar::class, 'events_window_months', -3);
 
-        $this->createEvent('Past event', Carbon::yesterday()->format('Y-m-d'));
+        $this->createEvent('Past event', Carbon::today()->subDays(5)->format('Y-m-d'));
 
         $element = $this->createElement(5);
         $events = $element->getEvents();
@@ -448,7 +448,7 @@ class ElementCalendarTest extends SapphireTest
      */
     public function testWindowStillHonoursLimitAndSortOrder()
     {
-        $this->createEvent('Past event', Carbon::yesterday()->format('Y-m-d'));
+        $this->createEvent('Past event', Carbon::today()->subDays(5)->format('Y-m-d'));
         for ($i = 1; $i <= 4; $i++) {
             $this->createEvent("Upcoming event $i", Carbon::today()->addDays($i)->format('Y-m-d'));
         }
@@ -474,7 +474,7 @@ class ElementCalendarTest extends SapphireTest
         $music = Category::create(['Title' => 'Music']);
         $music->write();
 
-        $pastGame = $this->createEvent('Past football game', Carbon::yesterday()->format('Y-m-d'));
+        $pastGame = $this->createEvent('Past football game', Carbon::today()->subDays(5)->format('Y-m-d'));
         $pastGame->Categories()->add($sports);
         $upcomingGame = $this->createEvent('Upcoming football game', Carbon::tomorrow()->format('Y-m-d'));
         $upcomingGame->Categories()->add($sports);
@@ -496,7 +496,7 @@ class ElementCalendarTest extends SapphireTest
      */
     public function testCalendarWithOnlyPastEventsReturnsEmptySummary()
     {
-        $this->createEvent('Past event one', Carbon::yesterday()->format('Y-m-d'));
+        $this->createEvent('Past event one', Carbon::today()->subDays(3)->format('Y-m-d'));
         $this->createEvent('Past event two', Carbon::today()->subWeek()->format('Y-m-d'));
 
         $element = $this->createElement(3);
@@ -506,16 +506,51 @@ class ElementCalendarTest extends SapphireTest
     }
 
     /**
+     * Calendar::getEventsFeed() filters on StartDate only, so the default backfill keeps
+     * an event that started before today but has not finished yet.
+     */
+    public function testInProgressMultiDayEventIsStillIncluded()
+    {
+        $yesterday = Carbon::yesterday()->format('Y-m-d');
+        $tomorrow = Carbon::tomorrow()->format('Y-m-d');
+        $this->createEvent('Overnight festival', $yesterday, $tomorrow);
+
+        $element = $this->createElement(5);
+        $events = $element->getEvents();
+
+        $this->assertEquals(1, $events->count());
+        $this->assertEquals('Overnight festival', $events->first()->Title);
+    }
+
+    /**
+     * The backfill is a knob, not a guarantee: with 0 the window starts exactly today and
+     * a running event whose StartDate is in the past falls out of it. Pinned so the
+     * trade-off is explicit for anyone who tunes the config.
+     */
+    public function testBackfillOfZeroExcludesAnInProgressEvent()
+    {
+        Config::modify()->set(ElementCalendar::class, 'events_window_backfill_days', 0);
+
+        $yesterday = Carbon::yesterday()->format('Y-m-d');
+        $tomorrow = Carbon::tomorrow()->format('Y-m-d');
+        $this->createEvent('Overnight festival', $yesterday, $tomorrow);
+
+        $element = $this->createElement(5);
+
+        $this->assertEquals(0, $element->getEvents()->count());
+    }
+
+    /**
      * Create an event in the test calendar and publish it.
      */
-    protected function createEvent(string $title, string $startDate): EventPage
+    protected function createEvent(string $title, string $startDate, ?string $endDate = null): EventPage
     {
         $event = EventPage::create([
             'Title' => $title,
             'ParentID' => $this->calendar->ID,
             'StartDate' => $startDate,
             'StartTime' => '10:00:00',
-            'EndDate' => $startDate,
+            'EndDate' => $endDate ?: $startDate,
             'EndTime' => '11:00:00',
             'Recursion' => 'NONE',
         ]);
