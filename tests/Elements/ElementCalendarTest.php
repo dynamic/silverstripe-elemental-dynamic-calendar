@@ -88,8 +88,8 @@ class ElementCalendarTest extends SapphireTest
         $object = $this->objFromFixture(ElementCalendar::class, 'one');
         // BaseElement::getType() resolves to the element's singular_name in Elemental 6,
         // and this module ships no lang/en.yml translation of <Class>.BlockType yet
-        // (tracked separately as issue 25), so the untranslated name is what comes back.
-        $this->assertEquals($object->getType(), 'Calendar Element');
+        // (tracked separately as issue #25), so the untranslated name is what comes back.
+        $this->assertEquals('Calendar Element', $object->getType());
     }
 
     /**
