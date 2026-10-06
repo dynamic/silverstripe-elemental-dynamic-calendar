@@ -7,6 +7,7 @@ use Dynamic\Calendar\Model\Category;
 use Dynamic\Calendar\Page\Calendar;
 use Dynamic\Calendar\Page\EventPage;
 use Dynamic\Elements\Calendar\Elements\ElementCalendar;
+use SilverStripe\Core\Config\Config;
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\Forms\DropdownField;
 use SilverStripe\Model\List\ArrayList;
@@ -363,6 +364,180 @@ class ElementCalendarTest extends SapphireTest
 
         $this->assertIsArray($schema);
         $this->assertArrayHasKey('content', $schema);
+    }
+
+    /**
+     * Regression test for #26: an event dated before today must not be materialised
+     * by the element, because the block can never show it.
+     */
+    public function testPastEventsAreExcludedFromTheWindow()
+    {
+        $this->createEvent('Past event', Carbon::yesterday()->format('Y-m-d'));
+        $this->createEvent('Upcoming event', Carbon::tomorrow()->format('Y-m-d'));
+
+        $element = $this->createElement(5);
+        $events = $element->getEvents();
+
+        $titles = $events->column('Title');
+        $this->assertNotContains('Past event', $titles, 'Events before today must be excluded');
+        $this->assertContains('Upcoming event', $titles);
+        $this->assertEquals(1, $events->count());
+    }
+
+    /**
+     * Regression test for #26: events further out than events_window_months are excluded.
+     * Default window is 6 months; here it is narrowed to 1 so the bound is unambiguous
+     * no matter which day of the month the suite runs on.
+     */
+    public function testEventsBeyondTheWindowAreExcluded()
+    {
+        Config::modify()->set(ElementCalendar::class, 'events_window_months', 1);
+
+        $this->createEvent('Inside window', Carbon::today()->addWeeks(3)->format('Y-m-d'));
+        $this->createEvent('Outside window', Carbon::today()->addMonths(3)->format('Y-m-d'));
+
+        $element = $this->createElement(5);
+        $events = $element->getEvents();
+
+        $titles = $events->column('Title');
+        $this->assertContains('Inside window', $titles);
+        $this->assertNotContains('Outside window', $titles, 'Events past the configured window must be excluded');
+        $this->assertEquals(1, $events->count());
+    }
+
+    /**
+     * Regression test for #26: a window of 0 restores the unbounded (pre-fix) behaviour,
+     * so the whole corpus - past events included - is available again.
+     */
+    public function testWindowOfZeroRestoresUnboundedBehaviour()
+    {
+        Config::modify()->set(ElementCalendar::class, 'events_window_months', 0);
+
+        $this->createEvent('Past event', Carbon::yesterday()->format('Y-m-d'));
+        $this->createEvent('Upcoming event', Carbon::tomorrow()->format('Y-m-d'));
+
+        $element = $this->createElement(5);
+        $events = $element->getEvents();
+
+        $titles = $events->column('Title');
+        $this->assertContains('Past event', $titles, 'A window of 0 must not bound the feed');
+        $this->assertContains('Upcoming event', $titles);
+        $this->assertEquals(2, $events->count());
+    }
+
+    /**
+     * A negative window is bad input: it must fall back to unbounded rather than error
+     * or silently return nothing.
+     */
+    public function testNegativeWindowFallsBackToUnbounded()
+    {
+        Config::modify()->set(ElementCalendar::class, 'events_window_months', -3);
+
+        $this->createEvent('Past event', Carbon::yesterday()->format('Y-m-d'));
+
+        $element = $this->createElement(5);
+        $events = $element->getEvents();
+
+        $this->assertEquals(1, $events->count());
+        $this->assertEquals('Past event', $events->first()->Title);
+    }
+
+    /**
+     * Happy path with the bounded window in place: only upcoming in-window events come
+     * back, still sorted by StartDate and still capped by Limit.
+     */
+    public function testWindowStillHonoursLimitAndSortOrder()
+    {
+        $this->createEvent('Past event', Carbon::yesterday()->format('Y-m-d'));
+        for ($i = 1; $i <= 4; $i++) {
+            $this->createEvent("Upcoming event $i", Carbon::today()->addDays($i)->format('Y-m-d'));
+        }
+        $this->createEvent('Far future event', Carbon::today()->addMonths(11)->format('Y-m-d'));
+
+        $element = $this->createElement(3);
+        $events = $element->getEvents();
+
+        $this->assertEquals(3, $events->count());
+        $this->assertEquals(
+            ['Upcoming event 1', 'Upcoming event 2', 'Upcoming event 3'],
+            $events->column('Title')
+        );
+    }
+
+    /**
+     * Category filtering must keep working now that a date window is passed down.
+     */
+    public function testCategoryFilteringStillAppliesWithBoundedWindow()
+    {
+        $sports = Category::create(['Title' => 'Sports']);
+        $sports->write();
+        $music = Category::create(['Title' => 'Music']);
+        $music->write();
+
+        $pastGame = $this->createEvent('Past football game', Carbon::yesterday()->format('Y-m-d'));
+        $pastGame->Categories()->add($sports);
+        $upcomingGame = $this->createEvent('Upcoming football game', Carbon::tomorrow()->format('Y-m-d'));
+        $upcomingGame->Categories()->add($sports);
+        $upcomingConcert = $this->createEvent('Upcoming concert', Carbon::tomorrow()->format('Y-m-d'));
+        $upcomingConcert->Categories()->add($music);
+
+        $element = $this->createElement(5);
+        $element->Categories()->add($sports);
+
+        $events = $element->getEvents();
+
+        $this->assertEquals(1, $events->count());
+        $this->assertEquals('Upcoming football game', $events->first()->Title);
+    }
+
+    /**
+     * Empty result: a calendar whose only events are in the past renders an empty list
+     * and a "No events" summary rather than an error.
+     */
+    public function testCalendarWithOnlyPastEventsReturnsEmptySummary()
+    {
+        $this->createEvent('Past event one', Carbon::yesterday()->format('Y-m-d'));
+        $this->createEvent('Past event two', Carbon::today()->subWeek()->format('Y-m-d'));
+
+        $element = $this->createElement(3);
+
+        $this->assertEquals(0, $element->getEvents()->count());
+        $this->assertStringContainsString('No events', (string)$element->getSummary());
+    }
+
+    /**
+     * Create an event in the test calendar and publish it.
+     */
+    protected function createEvent(string $title, string $startDate): EventPage
+    {
+        $event = EventPage::create([
+            'Title' => $title,
+            'ParentID' => $this->calendar->ID,
+            'StartDate' => $startDate,
+            'StartTime' => '10:00:00',
+            'EndDate' => $startDate,
+            'EndTime' => '11:00:00',
+            'Recursion' => 'NONE',
+        ]);
+        $event->write();
+        $event->publishRecursive();
+
+        return $event;
+    }
+
+    /**
+     * Create a fresh element bound to the test calendar (a fresh element per config
+     * change, since the element caches its events).
+     */
+    protected function createElement(int $limit): ElementCalendar
+    {
+        $element = ElementCalendar::create([
+            'CalendarID' => $this->calendar->ID,
+            'Limit' => $limit,
+        ]);
+        $element->write();
+
+        return $element;
     }
 
     /**
