@@ -19,7 +19,7 @@
     "require": {
         "php": "^8.3",
         "dnadesign/silverstripe-elemental": "^6.0",
-        "dynamic/silverstripe-calendar": "^3.0"
+        "dynamic/silverstripe-calendar": "^3.0.11"
     },
     "require-dev": {
         "cambis/silverstan": "^2.1",
