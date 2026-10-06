@@ -541,6 +541,59 @@ class ElementCalendarTest extends SapphireTest
     }
 
     /**
+     * The backfill reaches back before today, so a finished event from that window must not
+     * take one of the block's display slots away from upcoming events.
+     */
+    public function testFinishedYesterdayEventDoesNotPushUpcomingEventsOut()
+    {
+        $yesterday = Carbon::yesterday()->format('Y-m-d');
+        $tomorrow = Carbon::tomorrow()->format('Y-m-d');
+        $this->createEvent('Finished yesterday', $yesterday);
+        $this->createEvent('Running since yesterday', $yesterday, $tomorrow);
+        $this->createEvent('Tomorrow', $tomorrow);
+
+        $element = $this->createElement(2);
+        $events = $element->getEvents();
+
+        $this->assertEquals(['Running since yesterday', 'Tomorrow'], $events->column('Title'));
+    }
+
+    /**
+     * The "already finished" check must not delete recurring occurrences: an occurrence's
+     * EndDate is instance-relative, not the original event's (possibly years old) end date.
+     */
+    public function testRecurringOccurrencesAreNotDroppedByTheFinishedFilter()
+    {
+        $recurring = EventPage::create([
+            'Title' => 'Daily standup',
+            'ParentID' => $this->calendar->ID,
+            'StartDate' => Carbon::today()->subDays(3)->format('Y-m-d'),
+            'EndDate' => Carbon::today()->subDays(3)->format('Y-m-d'),
+            'StartTime' => '09:00:00',
+            'EndTime' => '09:15:00',
+            'Recursion' => 'DAILY',
+            'Interval' => 1,
+            'RecursionEndDate' => Carbon::today()->addDays(3)->format('Y-m-d'),
+        ]);
+        $recurring->write();
+        $recurring->publishRecursive();
+
+        $element = $this->createElement(20);
+        $events = $element->getEvents();
+
+        $today = Carbon::today()->format('Y-m-d');
+        $this->assertGreaterThan(1, $events->count());
+
+        foreach ($events as $event) {
+            $this->assertGreaterThanOrEqual(
+                $today,
+                (string)$event->StartDate,
+                'Occurrences that already passed must not be listed, upcoming ones must be'
+            );
+        }
+    }
+
+    /**
      * Create an event in the test calendar and publish it.
      */
     protected function createEvent(string $title, string $startDate, ?string $endDate = null): EventPage

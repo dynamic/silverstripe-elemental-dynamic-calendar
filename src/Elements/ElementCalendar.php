@@ -135,10 +135,10 @@ class ElementCalendar extends BaseElement
     /**
      * How many days before today the window reaches back. Calendar::getEventsFeed()
      * filters on StartDate only, so a window starting exactly today also drops an event
-     * that is still running (StartDate < today <= EndDate). Reaching back a day keeps
-     * the common one-day-overnight case visible while still bounding the fetch; sites
-     * with longer running events should raise this, and 0 restores a window that starts
-     * exactly today.
+     * that is still running (StartDate < today <= EndDate). Reaching back a day and then
+     * discarding anything that has already finished keeps running events visible without
+     * letting a finished one take a display slot. 0 starts the window exactly today,
+     * which excludes running events that began yesterday.
      *
      * @config
      * @var int
@@ -182,7 +182,33 @@ class ElementCalendar extends BaseElement
             $toDate = null;
         }
 
-        $events = $calendar->getEventsFeed($this->Limit, $this->Categories(), $fromDate, $toDate);
+        // The feed's own limit is deliberately not used here: it is applied inside
+        // getEventsFeed() before anything can inspect EndDate, so a finished event would
+        // take a slot and under-fill the block. The window bounds the fetch, so dropping
+        // that limit costs nothing and the limit is re-applied after the filter below.
+        $events = $calendar->getEventsFeed(null, $this->Categories(), $fromDate, $toDate);
+
+        if ($windowMonths > 0 && $backfillDays > 0) {
+            $today = Carbon::today();
+            $upcoming = ArrayList::create();
+
+            foreach ($events as $event) {
+                // Events whose end is unknown stay in the list; recurring occurrences carry
+                // an instance-relative EndDate, so this comparison is not made against the
+                // original event's (possibly years-old) end date.
+                $endDate = $event->EndDate ?: $event->StartDate;
+
+                if (!$endDate || Carbon::parse($endDate)->startOfDay()->gte($today)) {
+                    $upcoming->push($event);
+                }
+            }
+
+            $events = $upcoming;
+        }
+
+        if ($this->Limit > 0) {
+            $events = $events->limit((int) $this->Limit);
+        }
 
         $this->extend('updateSetEvents', $events);
 
