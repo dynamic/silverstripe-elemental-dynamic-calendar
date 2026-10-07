@@ -127,18 +127,27 @@ class ElementCalendar extends BaseElement
      * just to render a summary. 0 disables the bound entirely (the pre-fix behaviour,
      * restored for sites that need it).
      *
+     * The bound is a "starts no later than this" window, not an overlap window: like
+     * Calendar::getEventsFeed() it filters StartDate only, so an event's EndDate plays no
+     * part in whether the fetch returns it. See events_window_backfill_days below.
+     *
      * @config
      * @var int
      */
     private static int $events_window_months = 6;
 
     /**
-     * How many days before today the window reaches back. Calendar::getEventsFeed()
-     * filters on StartDate only, so a window starting exactly today also drops an event
-     * that is still running (StartDate < today <= EndDate). Reaching back a day and then
-     * discarding anything that has already finished keeps running events visible without
-     * letting a finished one take a display slot. 0 starts the window exactly today,
-     * which excludes running events that began yesterday.
+     * How many days before today the window reaches back.
+     *
+     * Known limitation, pending dynamic/silverstripe-calendar#267: the feed filters on
+     * StartDate only, so this keeps a running event visible only when it STARTED within
+     * this many days before today. An event that began earlier and is still running
+     * (StartDate earlier than today minus events_window_backfill_days, EndDate today or
+     * later) is dropped, even though the pre-fix unbounded feed showed it. Raising this
+     * value to at least the longest running duration on the site works around it; 0 starts
+     * the window exactly today, which also drops events that began yesterday. Overlap
+     * filtering in the feed (started before today but not yet finished) is tracked
+     * upstream and is not expressible here.
      *
      * @config
      * @var int
@@ -176,7 +185,7 @@ class ElementCalendar extends BaseElement
 
         if ($windowMonths > 0) {
             $fromDate = Carbon::today()->subDays($backfillDays);
-            $toDate = Carbon::today()->addMonths($windowMonths)->endOfMonth();
+            $toDate = Carbon::today()->addMonthsNoOverflow($windowMonths)->endOfMonth();
         } else {
             $fromDate = null;
             $toDate = null;
@@ -188,6 +197,9 @@ class ElementCalendar extends BaseElement
         // that limit costs nothing and the limit is re-applied after the filter below.
         $events = $calendar->getEventsFeed(null, $this->Categories(), $fromDate, $toDate);
 
+        // Drop anything that has already finished. This filter cannot bring back a running
+        // event that started before $fromDate: getEventsFeed() never returned it at all
+        // (see the events_window_backfill_days limitation).
         if ($windowMonths > 0 && $backfillDays > 0) {
             $today = Carbon::today();
             $upcoming = ArrayList::create();

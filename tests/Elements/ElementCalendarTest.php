@@ -594,6 +594,56 @@ class ElementCalendarTest extends SapphireTest
     }
 
     /**
+     * KNOWN LIMITATION, pinned on purpose: dynamic/silverstripe-calendar#267.
+     *
+     * Calendar::getEventsFeed() filters on StartDate only, so the default backfill of 1
+     * day rescues an event only if it started yesterday. A multi-day event that started 3
+     * days ago and is still running today (EndDate = today + 3) never reaches the list at
+     * all, even though the pre-fix unbounded feed showed it. This test documents that
+     * trade-off: it must FLIP (and the docblock/README wording with it) once #267 lands an
+     * overlap mode and this module adopts it.
+     */
+    public function testKnownLimitationEventRunningLongerThanTheBackfillIsDropped()
+    {
+        $this->createEvent(
+            'Week-long festival',
+            Carbon::today()->subDays(3)->format('Y-m-d'),
+            Carbon::today()->addDays(3)->format('Y-m-d')
+        );
+
+        $element = $this->createElement(5);
+        $events = $element->getEvents();
+
+        $this->assertNotContains(
+            'Week-long festival',
+            $events->column('Title'),
+            'Known limitation: the backfill covers events that started within it, not events still running'
+        );
+        $this->assertEquals(0, $events->count());
+    }
+
+    /**
+     * The documented workaround for the limitation above: raising the backfill to at least
+     * the event's duration brings a still-running long event back.
+     */
+    public function testBackfillRaisedToTheEventDurationKeepsARunningEventVisible()
+    {
+        Config::modify()->set(ElementCalendar::class, 'events_window_backfill_days', 7);
+
+        $this->createEvent(
+            'Week-long festival',
+            Carbon::today()->subDays(3)->format('Y-m-d'),
+            Carbon::today()->addDays(3)->format('Y-m-d')
+        );
+
+        $element = $this->createElement(5);
+        $events = $element->getEvents();
+
+        $this->assertEquals(1, $events->count());
+        $this->assertEquals('Week-long festival', $events->first()->Title);
+    }
+
+    /**
      * Create an event in the test calendar and publish it.
      */
     protected function createEvent(string $title, string $startDate, ?string $endDate = null): EventPage
