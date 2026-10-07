@@ -28,9 +28,11 @@ See [SilverStripe Elemental Configuration](https://github.com/dnadesign/silverst
 ### Calendar block event window
 
 `Dynamic\Elements\Calendar\Elements\ElementCalendar` bounds how far it asks
-`dynamic/silverstripe-calendar` for events, so that rendering a block does not expand a
-calendar's whole event corpus - and every recurring occurrence in it - just to list a few
-upcoming events.
+`dynamic/silverstripe-calendar` for events. The server-side list feeds the block's summary
+text and the CMS block schema; the events themselves are fetched in the browser from the
+calendar's own `/<calendar>/events` endpoint. Without a bound, every uncached call expanded
+the calendar's whole event corpus - and every recurring occurrence in it - just to show a
+few upcoming events.
 
 ```yml
 # any _config/*.yml in your project
@@ -56,7 +58,9 @@ around it; a proper "started before today but not yet finished" overlap mode is 
 upstream in [dynamic/silverstripe-calendar#267](https://github.com/dynamic/silverstripe-calendar/issues/267)
 and this module will adopt it there.
 
-Events whose end date falls before today are dropped from the window before the block's
-`Limit` is applied, so a finished event inside the backfill period cannot take a display
-slot away from an upcoming one. The comparison is by date, not by time of day: an event
-that ends today stays listed until tomorrow.
+When the window is enabled (a positive `events_window_months`), events whose end date falls
+before today are dropped from the window before the block's `Limit` is applied, so a
+finished event inside the backfill period cannot take a display slot away from an upcoming
+one. That drop is part of the bounded path only: with `events_window_months: 0` the fetch is
+unbounded and past events are kept, as before. The date comparison ignores time of day, so
+an event that ends today stays listed until tomorrow.
