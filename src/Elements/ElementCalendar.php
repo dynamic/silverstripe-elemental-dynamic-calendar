@@ -197,9 +197,9 @@ class ElementCalendar extends BaseElement
         // that limit costs nothing and the limit is re-applied after the filter below.
         $events = $calendar->getEventsFeed(null, $this->Categories(), $fromDate, $toDate);
 
-        // Drop anything that has already finished. This filter cannot bring back a running
-        // event that started before $fromDate: getEventsFeed() never returned it at all
-        // (see the events_window_backfill_days limitation).
+        // Drop anything that finished before today. This filter cannot bring back a
+        // running event that started before $fromDate: getEventsFeed() never returned it at
+        // all (see the events_window_backfill_days limitation).
         if ($windowMonths > 0 && $backfillDays > 0) {
             $today = Carbon::today();
             $upcoming = ArrayList::create();

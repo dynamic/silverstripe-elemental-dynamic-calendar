@@ -56,6 +56,7 @@ around it; a proper "started before today but not yet finished" overlap mode is 
 upstream in [dynamic/silverstripe-calendar#267](https://github.com/dynamic/silverstripe-calendar/issues/267)
 and this module will adopt it there.
 
-Events that have already finished are dropped from the window before the block's `Limit`
-is applied, so a finished event inside the backfill period cannot take a display slot away
-from an upcoming one.
+Events whose end date falls before today are dropped from the window before the block's
+`Limit` is applied, so a finished event inside the backfill period cannot take a display
+slot away from an upcoming one. The comparison is by date, not by time of day: an event
+that ends today stays listed until tomorrow.

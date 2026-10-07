@@ -462,6 +462,16 @@ class ElementCalendarTest extends SapphireTest
             ['Upcoming event 1', 'Upcoming event 2', 'Upcoming event 3'],
             $events->column('Title')
         );
+
+        // With a Limit above the number of in-window events, the far-future event is still
+        // absent: it is the window (default events_window_months = 6) that excludes it here,
+        // not the Limit. Without this second element the +11 month event would be dropped by
+        // Limit = 3 regardless of the window, i.e. it would test nothing.
+        $unlimitedElement = $this->createElement(10);
+        $this->assertEquals(
+            ['Upcoming event 1', 'Upcoming event 2', 'Upcoming event 3', 'Upcoming event 4'],
+            $unlimitedElement->getEvents()->column('Title')
+        );
     }
 
     /**
