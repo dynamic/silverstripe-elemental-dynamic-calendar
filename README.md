@@ -24,3 +24,43 @@ See [Elemental modules by Dynamic](https://github.com/dynamic/silverstripe-eleme
 ## Configuration
 
 See [SilverStripe Elemental Configuration](https://github.com/dnadesign/silverstripe-elemental#configuration)
+
+### Calendar block event window
+
+`Dynamic\Elements\Calendar\Elements\ElementCalendar` bounds how far it asks
+`dynamic/silverstripe-calendar` for events. The server-side list feeds the block's summary
+text and the CMS block schema; the events themselves are fetched in the browser from the
+calendar's own `/<calendar>/events` endpoint. Without a bound, every uncached call expanded
+the calendar's whole event corpus - and every recurring occurrence in it - just to show a
+few upcoming events.
+
+```yml
+# any _config/*.yml in your project
+Dynamic\Elements\Calendar\Elements\ElementCalendar:
+  events_window_months: 6
+  events_window_backfill_days: 1
+```
+
+* `events_window_months` (default `6`): how far ahead, in months, the feed is fetched.
+  The window closes at the end of that month. Set it to `0` - or any non-positive value -
+  to disable the bound and restore the unbounded fetch.
+* `events_window_backfill_days` (default `1`): how many days before today the window
+  reaches back, so an event that started yesterday and has not finished is still listed.
+  Set it to `0` to start the window exactly today.
+
+Both bounds are applied to `StartDate` only, because `Calendar::getEventsFeed()` filters on
+`StartDate` only. That has one consequence worth knowing about:
+`events_window_backfill_days` keeps a running event visible only if it *started* within
+that many days before today. An event that started earlier and is still running - a
+week-long festival on its fourth day - is left out. Raise
+`events_window_backfill_days` to at least the longest event duration on the site to work
+around it; a proper "started before today but not yet finished" overlap mode is tracked
+upstream in [dynamic/silverstripe-calendar#267](https://github.com/dynamic/silverstripe-calendar/issues/267)
+and this module will adopt it there.
+
+When the window is enabled (a positive `events_window_months`), events whose end date falls
+before today are dropped from the window before the block's `Limit` is applied, so a
+finished event inside the backfill period cannot take a display slot away from an upcoming
+one. That drop is part of the bounded path only: with `events_window_months: 0` the fetch is
+unbounded and past events are kept, as before. The date comparison ignores time of day, so
+an event that ends today stays listed until tomorrow.
