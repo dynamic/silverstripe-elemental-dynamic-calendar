@@ -314,7 +314,15 @@ class ElementCalendarTest extends SapphireTest
         $this->assertArrayHasKey($calendarTwo->ID, $source);
         $this->assertSame('My Other Awesome Calendar', $source[$calendarTwo->ID]);
 
-        $this->assertSame('', $field->getEmptyString(), 'Field should allow an empty/no-calendar selection');
+        $this->assertTrue(
+            $field->getHasEmptyDefault(),
+            'Field should still allow an empty/no-calendar selection'
+        );
+        $this->assertSame(
+            '(Select a calendar)',
+            $field->getEmptyString(),
+            'Empty option should carry an explicit prompt rather than a blank label'
+        );
     }
 
     /**

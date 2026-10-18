@@ -98,7 +98,7 @@ class ElementCalendar extends BaseElement
                         'CalendarID',
                         _t(__CLASS__ . '.CalendarLabel', 'Calendar'),
                         Calendar::get()->map('ID', 'Title')
-                    )->setEmptyString(''),
+                    )->setEmptyString(_t(__CLASS__ . '.CalendarEmptyString', '(Select a calendar)')),
                     $fields->dataFieldByName('Limit'),
                 ],
                 'Content'
