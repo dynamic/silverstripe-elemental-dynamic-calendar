@@ -3,3 +3,13 @@ parameters:
   treatPhpDocTypesAsCertain: false
   paths:
     - src
+  ignoreErrors:
+    # Calendar extends the project's global \Page, which does not exist in a module-only checkout, so
+    # phpstan cannot resolve DataObject::get() through the unknown parent (silverstan's Page stub does
+    # not restore it). The call works at runtime and is covered by ElementCalendarTest. Scoped to this
+    # one message, identifier and file (dynamic/silverstripe-elemental-dynamic-calendar#29).
+    -
+      message: '#^Call to an undefined static method Dynamic\\Calendar\\Page\\Calendar::get\(\)\.$#'
+      identifier: staticMethod.notFound
+      path: src/Elements/ElementCalendar.php
+      count: 1
