@@ -1,0 +1,10 @@
+en:
+  Dynamic\Elements\Calendar\Elements\ElementCalendar:
+    CalendarEmptyString: '(Select a calendar)'
+    CalendarLabel: Calendar
+    CLASS_DESCRIPTION: Calendar
+    PLURALNAME: 'Calendar Elements'
+    PLURALS:
+      one: 'A Calendar Element'
+      other: '{count} Calendar Elements'
+    SINGULARNAME: 'Calendar Element'
