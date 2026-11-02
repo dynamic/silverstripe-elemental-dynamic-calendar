@@ -10,8 +10,10 @@ use Dynamic\Elements\Calendar\Elements\ElementCalendar;
 use SilverStripe\Core\Config\Config;
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\Forms\DropdownField;
+use SilverStripe\i18n\i18n;
 use SilverStripe\Model\List\ArrayList;
 use SilverStripe\Versioned\Versioned;
+use Symfony\Component\Yaml\Yaml;
 
 /**
  * Class ElementCalendarTest
@@ -87,10 +89,84 @@ class ElementCalendarTest extends SapphireTest
     public function testGetType()
     {
         $object = $this->objFromFixture(ElementCalendar::class, 'one');
-        // BaseElement::getType() resolves to the element's singular_name in Elemental 6,
-        // and this module ships no lang/en.yml translation of <Class>.BlockType yet
-        // (tracked separately as issue #25), so the untranslated name is what comes back.
+        // BaseElement::getType() looks up <Class>.BlockType and falls back to the element's
+        // i18n singular name. This module deliberately ships no BlockType key, so the value
+        // comes from lang/en.yml's SINGULARNAME - which is the same English text the
+        // untranslated singular_name config produced before #25.
         $this->assertEquals('Calendar Element', $object->getType());
+    }
+
+    /**
+     * Regression test for #25: every translatable entity this module asks for must exist in
+     * lang/en.yml with exactly the text the code already renders, so wiring the module into
+     * SilverStripe's i18n system changes no rendered output and leaves nothing reachable only
+     * through an inline fallback.
+     */
+    public function testLangFileDefinesEveryTranslatableEntity()
+    {
+        $path = $this->langFilePath();
+        $this->assertFileExists($path, 'This module must ship lang/en.yml (issue #25)');
+        $messages = Yaml::parseFile($path)['en'][ElementCalendar::class];
+
+        $this->assertSame(
+            [
+                'CalendarEmptyString' => '(Select a calendar)',
+                'CalendarLabel' => 'Calendar',
+                'CLASS_DESCRIPTION' => 'Calendar',
+                'PLURALNAME' => 'Calendar Elements',
+                'PLURALS' => [
+                    'one' => 'A Calendar Element',
+                    'other' => '{count} Calendar Elements',
+                ],
+                'SINGULARNAME' => 'Calendar Element',
+            ],
+            $messages,
+            'lang/en.yml must match the inline fallbacks and name config exactly'
+        );
+    }
+
+    /**
+     * Regression test for #25: the file being on disk is not enough - it has to be picked up
+     * by the i18n catalogue. Passing a default the yml deliberately does NOT contain means
+     * this fails (rather than silently agreeing with the fallback) if the catalogue has no
+     * entry, which is what happened before the file existed.
+     */
+    public function testLangFileIsLoadedByTheI18nCatalogue()
+    {
+        $this->assertStringStartsWith(
+            'en',
+            i18n::get_locale(),
+            'These assertions read the english catalogue, so they need an english locale'
+        );
+
+        $marker = 'ZZ_NOT_IN_LANG_FILE';
+        $entity = function (string $key) use ($marker) {
+            return _t(ElementCalendar::class . '.' . $key, $marker);
+        };
+
+        $this->assertSame('Calendar', $entity('CalendarLabel'));
+        $this->assertSame('(Select a calendar)', $entity('CalendarEmptyString'));
+        $this->assertSame('Calendar', $entity('CLASS_DESCRIPTION'));
+        $this->assertSame('Calendar Element', $entity('SINGULARNAME'));
+        $this->assertSame('Calendar Elements', $entity('PLURALNAME'));
+
+        // _t() only takes the plural route when the *default* is pipe-delimited, so the
+        // sentinel default has to be shaped like a plural pair. Neither of its halves is
+        // text this module renders, so a missing PLURALS entry comes back as ZZ_* rather
+        // than quietly matching the real wording.
+        $plural = function (int $count) use ($marker) {
+            return _t(ElementCalendar::class . '.PLURALS', $marker . '|' . $marker . '_{count}', ['count' => $count]);
+        };
+        $this->assertSame('A Calendar Element', $plural(1), 'PLURALS must be readable in its singular form');
+        $this->assertSame('3 Calendar Elements', $plural(3), 'PLURALS must be readable in its plural form');
+    }
+
+    /**
+     * Absolute path to this module's english translation file.
+     */
+    protected function langFilePath(): string
+    {
+        return dirname(__DIR__, 2) . '/lang/en.yml';
     }
 
     /**
